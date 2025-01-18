@@ -1,0 +1,103 @@
+class MedicalReportListPage(QMainWindow, Ui_MedicalReportList):
+    def __init__(self, patient_id):
+        super().__init__()
+        self.setupUi(self)
+        self.patient_id = patient_id
+
+        # Connect buttons
+        self.pushButton_add_report.clicked.connect(self.open_add_report_form)
+        self.tableWidget.cellClicked.connect(self.open_report_detail)
+
+        # Load medical reports
+        self.load_medical_reports()
+
+    def load_medical_reports(self):
+        response = requests.get(f'http://127.0.0.1:8000/medical_reports/{self.patient_id}/')
+        if response.status_code == 200:
+            reports = response.json()['medical_reports']
+            self.update_table(reports)
+        else:
+            QMessageBox.critical(self, "Error", "Failed to load medical reports.")
+
+    def update_table(self, reports):
+        self.tableWidget.setRowCount(0)
+        for report in reports:
+            row = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(row)
+            self.tableWidget.setItem(row, 0, QTableWidgetItem(str(report['id'])))
+            self.tableWidget.setItem(row, 1, QTableWidgetItem(report['date']))
+            self.tableWidget.setItem(row, 2, QTableWidgetItem(report['patient']))
+
+    def open_report_detail(self, row, column):
+        report_id = self.tableWidget.item(row, 0).text()
+        self.report_form = MedicalReportForm(report_id)
+        self.report_form.show()
+        self.close()
+
+    def open_add_report_form(self):
+        self.report_form = MedicalReportForm(patient_id=self.patient_id)
+        self.report_form.show()
+        self.close()
+
+class MedicalReportForm(QMainWindow, Ui_MedicalReportForm):
+    def __init__(self, patient_id=None, report_id=None):
+        super().__init__()
+        self.setupUi(self)
+        self.patient_id = patient_id
+        self.report_id = report_id
+
+        # Connect buttons
+        self.pushButton_submit.clicked.connect(self.save_report)
+        self.pushButton_print.clicked.connect(self.print_report)
+
+        if report_id:
+            self.load_report_details()
+
+    def load_report_details(self):
+        response = requests.get(f'http://127.0.0.1:8000/medical_reports/{self.report_id}/detail/')
+        if response.status_code == 200:
+            report = response.json()['medical_report']
+            self.populate_form(report)
+        else:
+            QMessageBox.critical(self, "Error", "Failed to load report details.")
+
+    def populate_form(self, report):
+        # Populate the form fields with report details
+        self.lineEdit_age.setText(str(report['age']))
+        self.lineEdit_sexe.setText(report['sexe'])
+        self.lineEdit_profession.setText(report['profession'])
+        # (Set other fields as required...)
+
+    def save_report(self):
+        data = {
+            "patient_id": self.patient_id,
+            "age": self.lineEdit_age.text(),
+            "sexe": self.lineEdit_sexe.text(),
+            "profession": self.lineEdit_profession.text(),
+            # (Include all other fields here...)
+        }
+        response = requests.post('http://127.0.0.1:8000/medical_reports/add/', json=data)
+        if response.status_code == 200:
+            QMessageBox.information(self, "Success", "Medical report saved successfully!")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to save report.")
+
+    def print_report(self):
+        # Ensure the report is saved before printing
+        if not self.report_id:
+            QMessageBox.warning(self, "Error", "Please save the report before printing.")
+            return
+        QMessageBox.information(self, "Print", "Printing report...")
+        
+        
+        
+        
+        
+        
+        prompt:
+we will work on the medical report system i have coded the ui  and converted the to a py file in this ui we have a name section to retrive stored patient. in this ui we have 3 pushbuttons , a table and a linedit(used to research):
+-view_pushbuttons: when we want to view the patient medical report attached to him, we first click on the in the table and an click on the view button which will redirect us to another page showing that medical reports he has(list patient medical report)patient details but we will just display a message "report list " for the moment. since we are still porgramming it.
+-create_medicalreportpushbuttons: this button will be use to create patient medical report and when we want to create the patient medical report we will first click on the patient and click on the button to create so it should redirct us to the medical report form to fill but for the moment we will just display a message "medical report for patient_name(here)"
+-searchPushbutton and the lineedit: wich will be used to search for patient in the table and display result.
+-table: this will be used to display the patients we have and all their datails.
+below is the converted ui to py for medical report system.
